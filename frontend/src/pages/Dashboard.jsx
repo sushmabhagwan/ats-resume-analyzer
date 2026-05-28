@@ -13,6 +13,8 @@ function Dashboard() {
 
   const [history, setHistory] = useState([])
 
+  const username = localStorage.getItem("username")
+
 
   // Fetch analysis history
   useEffect(() => {
@@ -103,6 +105,8 @@ function Dashboard() {
 
     localStorage.removeItem("token")
 
+    localStorage.removeItem("username")
+
     window.location.href = "/"
   }
 
@@ -114,15 +118,29 @@ function Dashboard() {
       <div className="max-w-5xl mx-auto">
 
         {/* Navbar */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
 
-          <h1 className="text-4xl font-bold text-blue-600">
-            ATS Resume Analyzer
-          </h1>
+          <div>
+
+            <h1 className="text-4xl font-bold text-blue-600">
+              ATS Resume Analyzer
+            </h1>
+
+            <p className="text-gray-500 mt-1">
+
+              Welcome,
+
+              <span className="font-semibold ml-1">
+                {username}
+              </span>
+
+            </p>
+
+          </div>
 
           <button
             onClick={handleLogout}
-            className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600"
+            className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition"
           >
             Logout
           </button>
@@ -183,9 +201,23 @@ function Dashboard() {
             >
 
               {
-                loading
-                  ? "AI Analyzing Resume..."
-                  : "Analyze Resume"
+                loading ? (
+
+                  <div className="flex justify-center items-center gap-3">
+
+                    <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+
+                    <span>
+                      AI Analyzing Resume...
+                    </span>
+
+                  </div>
+
+                ) : (
+
+                  "Analyze Resume"
+
+                )
               }
 
             </button>
@@ -235,7 +267,7 @@ function Dashboard() {
 
 
                   {/* Score Cards */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     <div className="bg-white p-4 rounded-lg shadow">
 
@@ -344,14 +376,20 @@ function Dashboard() {
 
 
           {/* Analysis History */}
-          {
-            history.length > 0 && (
+          <div className="mt-10 bg-gray-50 p-6 rounded-lg">
 
-              <div className="mt-10 bg-gray-50 p-6 rounded-lg">
+            <h2 className="text-2xl font-bold mb-6">
+              Analysis History
+            </h2>
 
-                <h2 className="text-2xl font-bold mb-6">
-                  Analysis History
-                </h2>
+            {
+              history.length === 0 ? (
+
+                <p className="text-gray-500">
+                  No analysis history found.
+                </p>
+
+              ) : (
 
                 <div className="space-y-4">
 
@@ -396,10 +434,10 @@ function Dashboard() {
 
                 </div>
 
-              </div>
+              )
+            }
 
-            )
-          }
+          </div>
 
         </div>
 

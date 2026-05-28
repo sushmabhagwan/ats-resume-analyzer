@@ -24,10 +24,12 @@ function Login() {
                     password
                 }
             )
-
+            // SAVE TOKEN 
+            localStorage.setItem( "token", response.data.access_token )
+            
             localStorage.setItem(
-                "token",
-                response.data.access_token
+                "username",
+                response.data.user.username
             )
 
             navigate("/dashboard")
