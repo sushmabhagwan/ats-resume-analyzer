@@ -1,5 +1,9 @@
-import { useState, useEffect } from "react"
+
+import { useState, useEffect, useRef } from "react"
 import axios from "axios"
+import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
+import AnalyticsChart from "../components/AnalyticsChart"
 
 function Dashboard() {
 
@@ -12,11 +16,15 @@ function Dashboard() {
   const [result, setResult] = useState(null)
 
   const [history, setHistory] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [scoreFilter, setScoreFilter] = useState("all")
+
+  const reportRef = useRef()
 
   const username = localStorage.getItem("username")
 
 
-  // Fetch analysis history
+  // Fetch Analysis History
   useEffect(() => {
 
     fetchHistory()
@@ -44,9 +52,48 @@ function Dashboard() {
     } catch (error) {
 
       console.log(error)
+
+      if (error.response?.status === 401) {
+
+        handleLogout()
+      }
     }
   }
 
+  const filteredHistory = history.filter((item) => {
+
+  const matchesSearch =
+    item.filename
+      .toLowerCase()
+      .includes(
+        searchTerm.toLowerCase()
+      )
+
+  const matchesScore =
+
+    scoreFilter === "all" ||
+
+    (
+      scoreFilter === "high" &&
+      item.ats_score >= 70
+    ) ||
+
+    (
+      scoreFilter === "medium" &&
+      item.ats_score >= 50 &&
+      item.ats_score < 70
+    ) ||
+
+    (
+      scoreFilter === "low" &&
+      item.ats_score < 50
+    )
+
+  return (
+    matchesSearch &&
+    matchesScore
+  )
+})
 
   // Analyze Resume
   const handleSubmit = async (e) => {
@@ -60,11 +107,35 @@ function Dashboard() {
       return
     }
 
+
+    // File Validation
+    if (
+      !file.name.endsWith(".pdf") &&
+      !file.name.endsWith(".docx")
+    ) {
+
+      alert("Only PDF and DOCX files allowed")
+
+      return
+    }
+
+
+    // File Size Validation
+    if (file.size > 5 * 1024 * 1024) {
+
+      alert("File size must be less than 5MB")
+
+      return
+    }
+
     const formData = new FormData()
 
     formData.append("file", file)
 
-    formData.append("job_description", jobDescription)
+    formData.append(
+      "job_description",
+      jobDescription
+    )
 
     try {
 
@@ -84,14 +155,25 @@ function Dashboard() {
 
       setResult(response.data)
 
-      // Refresh history
       fetchHistory()
 
     } catch (error) {
 
-      console.error(error)
+      console.log(error)
 
-      alert("Error analyzing resume")
+      if (error.response?.status === 401) {
+
+        alert("Session expired")
+
+        handleLogout()
+
+      } else {
+
+        alert(
+          error.response?.data?.detail ||
+          "Error analyzing resume"
+        )
+      }
 
     } finally {
 
@@ -100,6 +182,64 @@ function Dashboard() {
   }
 
 
+  // Download PDF
+  const downloadPDF = async () => {
+
+    const input = reportRef.current
+
+    const canvas = await html2canvas(input)
+
+    const imgData = canvas.toDataURL("image/png")
+
+    const pdf = new jsPDF(
+      "p",
+      "mm",
+      "a4"
+    )
+
+    const pdfWidth =
+      pdf.internal.pageSize.getWidth()
+
+    const pdfHeight =
+      (canvas.height * pdfWidth) /
+      canvas.width
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      0,
+      pdfWidth,
+      pdfHeight
+    )
+
+    pdf.save("ATS_Report.pdf")
+  }
+
+  const deleteAnalysis = async (id) => {
+
+  try {
+
+    const token = localStorage.getItem("token")
+
+    await axios.delete(
+      `http://127.0.0.1:8000/analysis/history/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    fetchHistory()
+
+  } catch (error) {
+
+    console.log(error)
+
+    alert("Failed to delete analysis")
+  }
+}
   // Logout
   const handleLogout = () => {
 
@@ -166,7 +306,9 @@ function Dashboard() {
               <input
                 type="file"
                 accept=".pdf,.docx"
-                onChange={(e) => setFile(e.target.files[0])}
+                onChange={(e) =>
+                  setFile(e.target.files[0])
+                }
                 className="w-full border border-gray-300 p-3 rounded-lg"
               />
 
@@ -184,7 +326,9 @@ function Dashboard() {
                 rows="8"
                 value={jobDescription}
                 onChange={(e) =>
-                  setJobDescription(e.target.value)
+                  setJobDescription(
+                    e.target.value
+                  )
                 }
                 className="w-full border border-gray-300 p-4 rounded-lg"
                 placeholder="Paste job description here..."
@@ -229,7 +373,10 @@ function Dashboard() {
           {
             result && (
 
-              <div className="mt-10 space-y-6">
+              <div
+                ref={reportRef}
+                className="mt-10 space-y-6"
+              >
 
                 {/* ATS Score */}
                 <div className="bg-gray-50 p-6 rounded-lg">
@@ -247,7 +394,9 @@ function Dashboard() {
                       </span>
 
                       <span className="font-bold text-blue-600">
-                        {result.ats_analysis.ats_score}%
+                        {
+                          result.ats_analysis.ats_score
+                        }%
                       </span>
 
                     </div>
@@ -257,7 +406,8 @@ function Dashboard() {
                       <div
                         className="bg-blue-600 h-5 rounded-full"
                         style={{
-                          width: `${result.ats_analysis.ats_score}%`
+                          width:
+                            `${result.ats_analysis.ats_score}%`
                         }}
                       />
 
@@ -276,7 +426,9 @@ function Dashboard() {
                       </p>
 
                       <p className="text-2xl font-bold">
-                        {result.ats_analysis.similarity_score}
+                        {
+                          result.ats_analysis.similarity_score
+                        }
                       </p>
 
                     </div>
@@ -288,7 +440,9 @@ function Dashboard() {
                       </p>
 
                       <p className="text-2xl font-bold">
-                        {result.ats_analysis.skill_match_ratio}%
+                        {
+                          result.ats_analysis.skill_match_ratio
+                        }%
                       </p>
 
                     </div>
@@ -369,13 +523,77 @@ function Dashboard() {
 
                 </div>
 
+
+                {/* Download PDF */}
+                <div className="flex justify-end">
+
+                  <button
+                    onClick={downloadPDF}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+                  >
+                    Download PDF Report
+                  </button>
+
+                </div>
+
               </div>
 
             )
           }
+          {/* Search and Filter */}
+<div className="mt-10 bg-white p-6 rounded-lg shadow">
 
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* Analysis History */}
+    {/* Search */}
+    <input
+      type="text"
+      placeholder="Search by filename..."
+      value={searchTerm}
+      onChange={(e) =>
+        setSearchTerm(e.target.value)
+      }
+      className="border p-3 rounded-lg"
+    />
+
+    {/* Filter */}
+    <select
+      value={scoreFilter}
+      onChange={(e) =>
+        setScoreFilter(e.target.value)
+      }
+      className="border p-3 rounded-lg"
+    >
+
+      <option value="all">
+        All Scores
+      </option>
+
+      <option value="high">
+        High Score (70+)
+      </option>
+
+      <option value="medium">
+        Medium Score (50-69)
+      </option>
+
+      <option value="low">
+        Low Score (Below 50)
+      </option>
+
+    </select>
+
+  </div>
+
+</div>
+          {/* Analytics Chart */}
+{
+  history.length > 0 && (
+    <AnalyticsChart history={history} />
+  )
+}
+
+          {/* History */}
           <div className="mt-10 bg-gray-50 p-6 rounded-lg">
 
             <h2 className="text-2xl font-bold mb-6">
@@ -383,7 +601,7 @@ function Dashboard() {
             </h2>
 
             {
-              history.length === 0 ? (
+              filteredHistory.length === 0 ? (
 
                 <p className="text-gray-500">
                   No analysis history found.
@@ -394,38 +612,51 @@ function Dashboard() {
                 <div className="space-y-4">
 
                   {
-                    history.map((item) => (
+                    filteredHistory.map((item) => (
 
                       <div
                         key={item.id}
                         className="bg-white p-4 rounded-lg shadow border"
                       >
 
-                        <div className="flex justify-between items-center">
+                       <div className="flex justify-between items-center">
 
-                          <div>
+  <div>
 
-                            <h3 className="font-bold text-lg">
-                              {item.filename}
-                            </h3>
+    <h3 className="font-bold text-lg">
+      {item.filename}
+    </h3>
 
-                            <p className="text-gray-600">
-                              ATS Score: {item.ats_score}%
-                            </p>
+    <p className="text-gray-600">
+      ATS Score: {item.ats_score}%
+    </p>
 
-                          </div>
+  </div>
 
-                          <div className="text-sm text-gray-400">
+  <div className="flex items-center gap-4">
 
-                            {
-                              new Date(
-                                item.created_at
-                              ).toLocaleString()
-                            }
+    <div className="text-sm text-gray-400">
 
-                          </div>
+      {
+        new Date(
+          item.created_at
+        ).toLocaleString()
+      }
 
-                        </div>
+    </div>
+
+    <button
+      onClick={() =>
+        deleteAnalysis(item.id)
+      }
+      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+    >
+      Delete
+    </button>
+
+  </div>
+
+</div> 
 
                       </div>
 

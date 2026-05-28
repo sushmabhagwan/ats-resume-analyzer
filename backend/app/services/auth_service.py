@@ -3,15 +3,18 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
+import os
+from dotenv import load_dotenv
 
-# SECRET KEY
-SECRET_KEY = "mysecretkey123"
+load_dotenv()
 
-# JWT Algorithm
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-# Token expiry
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ALGORITHM = os.getenv("ALGORITHM")
+
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+)
 
 
 # Password hashing

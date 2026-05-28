@@ -21,6 +21,7 @@ from app.models.resume_analysis_model import ResumeAnalysis
 
 from app.dependencies.auth_dependency import get_current_user
 
+from fastapi import HTTPException
 
 router = APIRouter(
     prefix="/analysis",
@@ -184,4 +185,38 @@ def get_analysis_history(
 
     return {
         "history": history
+    }
+@router.delete("/history/{analysis_id}")
+def delete_analysis(
+
+    analysis_id: int,
+
+    current_user: dict = Depends(get_current_user),
+
+    db: Session = Depends(get_db)
+):
+
+    analysis = db.query(
+        ResumeAnalysis
+    ).filter(
+
+        ResumeAnalysis.id == analysis_id,
+
+        ResumeAnalysis.user_id == current_user["user_id"]
+
+    ).first()
+
+    if not analysis:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found"
+        )
+
+    db.delete(analysis)
+
+    db.commit()
+
+    return {
+        "message": "Analysis deleted successfully"
     }

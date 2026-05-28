@@ -29,10 +29,11 @@ function App() {
 
         <Route
           path="/dashboard"
-          element={<ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
 
       </Routes>
