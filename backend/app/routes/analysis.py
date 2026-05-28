@@ -101,27 +101,32 @@ async def ai_suggestions(
     # Save analysis to database
     analysis_record = ResumeAnalysis(
 
-        user_id=current_user["user_id"],
+    user_id=current_user["user_id"],
 
-        filename=file.filename,
+    filename=file.filename,
 
-        ats_score=ats_result["ats_score"],
+    ats_score=float(
+        ats_result["ats_score"]
+    ),
 
-        similarity_score=ats_result["similarity_score"],
+    similarity_score=float(
+        ats_result["similarity_score"]
+    ),
 
-        skill_match_ratio=ats_result["skill_match_ratio"],
+    skill_match_ratio=float(
+        ats_result["skill_match_ratio"]
+    ),
 
-        matched_keywords=", ".join(
-            ats_result["matched_keywords"]
-        ),
+    matched_keywords=", ".join(
+        ats_result["matched_keywords"]
+    ),
 
-        missing_keywords=", ".join(
-            ats_result["missing_keywords"]
-        ),
+    missing_keywords=", ".join(
+        ats_result["missing_keywords"]
+    ),
 
-        ai_suggestions=suggestions
-    )
-
+    ai_suggestions=suggestions
+)
     # Add to database
     db.add(analysis_record)
 
