@@ -1,6 +1,10 @@
 import requests
+import os
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434/api/generate"
+)
 
 
 def generate_resume_suggestions(
@@ -64,12 +68,11 @@ Return:
 
         return """
 AI Error:
-Cannot connect to Ollama.
+AI Suggestions are currently unavailable in the cloud version.
 
-Make sure Ollama is installed and running.
+ATS analysis, scoring, and keyword matching are working correctly.
 
-Run:
-ollama run phi3
+To use AI suggestions, run the application locally with Ollama installed.
 """
 
     except requests.exceptions.Timeout:
