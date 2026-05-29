@@ -4,7 +4,7 @@ import axios from "axios"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import AnalyticsChart from "../components/AnalyticsChart"
-import.meta.env.VITE_API_URL
+
 
 function Dashboard() {
 
