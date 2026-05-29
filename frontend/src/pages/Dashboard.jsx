@@ -4,6 +4,7 @@ import axios from "axios"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import AnalyticsChart from "../components/AnalyticsChart"
+import.meta.env.VITE_API_URL
 
 function Dashboard() {
 
@@ -39,7 +40,7 @@ function Dashboard() {
       const token = localStorage.getItem("token")
 
       const response = await axios.get(
-        "http://127.0.0.1:8000/analysis/history",
+        `${import.meta.env.VITE_API_URL}/analysis/history`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -144,7 +145,7 @@ function Dashboard() {
       const token = localStorage.getItem("token")
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/analysis/ai-suggestions",
+        `${import.meta.env.VITE_API_URL}/analysis/ai-suggestions`,
         formData,
         {
           headers: {
@@ -223,7 +224,7 @@ function Dashboard() {
     const token = localStorage.getItem("token")
 
     await axios.delete(
-      `http://127.0.0.1:8000/analysis/history/${id}`,
+      `${import.meta.env.VITE_API_URL}/analysis/history/${id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`

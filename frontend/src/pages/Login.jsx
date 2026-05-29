@@ -18,12 +18,12 @@ function Login() {
         try {
 
             const response = await axios.post(
-                "http://127.0.0.1:8000/auth/login",
-                {
-                    email,
-                    password
-                }
-            )
+    `${import.meta.env.VITE_API_URL}/auth/login`,
+    {
+        email,
+        password
+    }
+)
             // SAVE TOKEN 
             localStorage.setItem( "token", response.data.access_token )
             
